@@ -1,0 +1,11 @@
+[package]
+name = "prereqs"
+version = "0.1.0"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/testnet" }
+# Sui = { local = "./sui-framework/packages/sui-framework" } # for local testing, but need to fix deny_list_object error
+
+[addresses]
+prereqs = "0x0"
+examples = "0x1"

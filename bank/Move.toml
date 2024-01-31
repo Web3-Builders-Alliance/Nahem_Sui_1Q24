@@ -1,0 +1,10 @@
+[package]
+name = "bank"
+version = "0.0.1"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "releases/sui-v0.29.0-release" }
+# Sui = { local = "./sui-framework/packages/sui-framework" } # for local testing, but need to fix deny_list_object error
+
+[addresses]
+bank = "0x0"

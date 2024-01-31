@@ -5,14 +5,14 @@ compiled_package_info:
     bank: "0000000000000000000000000000000000000000000000000000000000000000"
     std: "0000000000000000000000000000000000000000000000000000000000000001"
     sui: "0000000000000000000000000000000000000000000000000000000000000002"
-  source_digest: E5989684886D7E85858E9D4AA61AE1E952EF5E3896D825F33685B2F2DED62499
+  source_digest: 3FED74F86C34F0A85C09E0C59AF7D10FB070393F251A562E177426A1F9399B75
   build_flags:
-    dev_mode: false
-    test_mode: false
+    dev_mode: true
+    test_mode: true
     generate_docs: false
     install_dir: ~
     force_recompilation: false
-    lock_file: "./Move.lock"
+    lock_file: ~
     fetch_deps_only: false
     skip_fetch_latest_git_deps: false
     default_flavor: sui

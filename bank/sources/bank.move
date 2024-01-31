@@ -98,42 +98,31 @@ module bank::bank {
         coin::from_balance(fee_balance, ctx)
     }
 
-    #[test]
-    public fun test_deposit() {
-        use sui::test_scenario;
-        use sui::coin::{mint_for_testing};
+    // given a user address, returns the balance of that address
+    public fun get_balance(self: &Bank, user: address): u64 {
+        let key = UserBalance { user: user };
+        if (df::exists_(&self.id, key)) {
+            let user_balance = df::borrow<UserBalance, Balance<SUI>>(&self.id, key);
+            balance::value(user_balance)
+        } else {
+            0
+        }
+    }
 
-        // define admin and depositor addresses
-        let admin = @0xAAAA;
-        let depositor = @0xBBBB;
+    // return the admin balance
+    public fun get_admin_balance(self: &Bank): u64 {
+        let admin_balance = df::borrow<AdminBalance, Balance<SUI>>(
+            &self.id,
+            AdminBalance { },
+        );
+        balance::value(admin_balance)
+    }
 
-        // first transaction to emulate module initialization
-        let scenario_val = test_scenario::begin(admin);
-        let scenario = &mut scenario_val;
-        init(test_scenario::ctx(scenario));
-
-        // second transaction executed by depositor to deposit
-        test_scenario::next_tx(scenario, depositor);
-
-        // take the shared bank object
-        let bank_share = test_scenario::take_shared<Bank>(scenario);
-
-        // mint 3000 SUI tokens for depositor. 
-        // TODO: make sure this is minted to depositor and not admin
-        let deposit_sui = mint_for_testing<SUI>(3000, test_scenario::ctx(scenario));
-
-        // user depostits 3000 SUI tokens into the bank
-        deposit(&mut bank_share, deposit_sui, test_scenario::ctx(scenario));
-
-        // returns bank object (is this necessary?)
-        test_scenario::return_shared(bank_share);
-
-        // TODO: test withdraw
-        // TODO: test partial withdraw
-        // TODO: test claim
-
-        // end of test
-        test_scenario::end(scenario_val);
+    // This is necessary because the init() signature is not public, 
+    // so we have to add our own "public backdoor" trick to call it.
+    #[test_only]
+    public fun init_for_testing(ctx: &mut TxContext) {
+        init(ctx);
     }
 }
 

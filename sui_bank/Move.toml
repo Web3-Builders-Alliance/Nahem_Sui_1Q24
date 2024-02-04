@@ -1,0 +1,9 @@
+[package]
+name = "sui_bank"
+version = "0.0.1"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "releases/sui-v0.29.0-release" }
+
+[addresses]
+sui_bank = "0x0"

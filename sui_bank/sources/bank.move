@@ -20,7 +20,7 @@ module sui_bank::bank {
 
     // === Constants ===
 
-    const FEE: u8 = 5; // Represents a % fee taken on deposits (i.e. 5% fee)
+    const FEE: u8 = 5; // 5% fee
     const EXCHANGE_RATE: u8 = 40;
 
     // === Structs ===
@@ -42,6 +42,18 @@ module sui_bank::bank {
         id: UID
     }
 
+    // === Public-Init Function ===
+
+    fun init(ctx: &mut TxContext) {
+        let bank = Bank {
+            id: object::new(ctx),
+            balance: balance::zero(),
+            admin_balance: balance::zero()
+        };
+        transfer::share_object(bank);
+        transfer::transfer(OwnerCap { id: object::new(ctx)}, tx_context::sender(ctx));
+    }
+
     // === Public-Mutative Functions ===
 
     public fun new_account(ctx: &mut TxContext): Account {
@@ -56,10 +68,8 @@ module sui_bank::bank {
     public fun deposit(self: &mut Bank, account: &mut Account, tokens: Coin<SUI>, ctx: &mut TxContext) {
         let full_deposit = coin::value(&tokens);
         let fee = (((full_deposit as u128) * (FEE as u128) / 100) as u64);
-
         let admin_coin = coin::split(&mut tokens, fee, ctx);
         account.deposit = account.deposit + coin::value(&tokens);
-
         balance::join(&mut self.balance, coin::into_balance(tokens));
         balance::join(&mut self.admin_balance, coin::into_balance(admin_coin));
     }
@@ -67,7 +77,6 @@ module sui_bank::bank {
     public fun withdraw(self: &mut Bank, account: &mut Account, amount: u64, ctx: &mut TxContext): Coin<SUI> {
         assert!(account.debt == 0, EPayYourLoanFirst);
         assert!(account.deposit >= amount , ENotEnoughBalance);
-
         account.deposit = account.deposit - amount;
         let balance_to_withdraw = balance::split(&mut self.balance, amount);
         coin::from_balance(balance_to_withdraw, ctx)
@@ -85,29 +94,47 @@ module sui_bank::bank {
         let amount_to_repay = sui_dollar::burn(cap, tokens);
         account.debt = account.debt - amount_to_repay;
     }
+
+    public fun close_account(account: Account) {
+        let Account { id, user: _, debt: _ , deposit} = account;
+        assert!(deposit == 0, EAccountMustBeEmpty);
+        object::delete(id);
+    }
+
     // === Public-View Functions ===
 
+    public fun balance(self: &Bank): u64 {
+        balance::value(&self.balance)
+    }
+
+    public fun admin_balance(self: &Bank): u64 {
+        balance::value(&self.admin_balance)
+    }
+    
+    public fun user(account: &Account): address {
+        account.user
+    }
+
+    public fun debt(account: &Account): u64 {
+        account.debt
+    }
+
+    public fun user_balance(account: &Account): u64 {
+        account.deposit
+    }
 
     // === Admin Functions ===
 
-
-    // === Public-Friend Functions ===
-
-
-    // === Private Functions ===
-
+    public fun claim(_: &OwnerCap, bank: &mut Bank, ctx: &mut TxContext): Coin<SUI> {
+        // assert!(&bank.admin_balance > 0, ENotEnoughBalance);
+        let value = balance::value(&bank.admin_balance);
+        coin::take(&mut bank.admin_balance, value, ctx)
+    }
 
     // === Test Functions ===
 
-    fun init(ctx: &mut TxContext) {
-        let bank = Bank {
-            id: object::new(ctx),
-            balance: balance::zero(),
-            admin_balance: balance::zero()
-        };
-        transfer::share_object(bank);
-        transfer::transfer(OwnerCap { id: object::new(ctx)}, tx_context::sender(ctx));
+    #[test_only]
+    public fun init_for_testing(ctx: &mut TxContext) {
+        init(ctx);
     }
-
-
 }
